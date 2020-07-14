@@ -86,9 +86,6 @@ rm(dataset)
 # Note: may fail to compile if R session is not restarted
 ##################################################################
 
-# Quick method - load pre-computed models
-# load("G:/Football/Study1_analysis/Stan_Models.RData")
-
 require(rethinking)
 
 # leave 1 core available for other processes
