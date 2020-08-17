@@ -7,6 +7,7 @@ rm(list=ls(all=TRUE))
 ###########################################################################################
 #
 #  TAKES ABOUT 2 HOURS TO RUN - and may disable your use of all other apps
+#  You may save time by running fewer warmup trials / chains 
 #  You must have "Utilities.R" in your working directory after loading the data
 #
 ###########################################################################################
@@ -83,7 +84,6 @@ rm(dataset)
 ##################################################################
 # Stan models
 # Be patient, takes some hours to compute these models
-# Note: may fail to compile if R session is not restarted
 ##################################################################
 
 require(rethinking)
@@ -93,8 +93,8 @@ nCores = parallel::detectCores()
 chains <- nCores <- nCores-1
 
 # WARNING - HARDWARE DEPENDENT
-# Increase the amount of memory available to R.
-memory.limit(size = 7e+08)
+# Increase the amount of memory available to R. Maybe necessary to compare models
+# memory.limit(size = 7e+08)
 
 
 # m1 regression of SRS on Logit P
@@ -226,11 +226,11 @@ post.m4 <- extract.samples(m4)
 #  compare(m4,m4.5)
 
 
-#m5 logit P on (Keeper-kicker)/2 and (Keeper+kicker)/2  , random intercepts and slopes
+#m5 logit P on (Keeper-kicker) and (Keeper+kicker), random intercepts and slopes
 m5 <- ulam(
   alist(
     Left ~ bernoulli( p ),
-    logit(p) <- b0[Subj] + b1[Subj]*KKPer_DiffAve + b2[Subj]*KKPer_SumAve,
+    logit(p) <- b0[Subj] + b1[Subj]*KKPerDiff + b2[Subj]*KKPerSum,
     b0[Subj] ~ normal(b0_mu, b0_sigma),
     b1[Subj] ~ normal(b1_mu, b1_sigma),
     b2[Subj] ~ normal(b2_mu, b2_sigma),
@@ -250,11 +250,11 @@ post.m5 <- extract.samples(m5)
 
 
 
-#m6 SRS  on (Keeper-kicker)/2 and (Keeper+kicker)/2  , random intercepts and slopes
+#m6 SRS  on (Keeper-kicker) and (Keeper+kicker), random intercepts and slopes
 m6 <- ulam(
   alist(
     SRS ~ normal( mu, sigma ),
-    mu <- b0[Subj] + b1[Subj]*KKPer_DiffAve + b2[Subj]*KKPer_SumAve,
+    mu <- b0[Subj] + b1[Subj]*KKPerDiff + b2[Subj]*KKPerSum,
     b0[Subj] ~ normal(b0_mu, b0_sigma),
     b1[Subj] ~ normal(b1_mu, b1_sigma),
     b2[Subj] ~ normal(b2_mu, b2_sigma),
@@ -332,7 +332,7 @@ mu.mean <- apply(mu,2,mean)
 mu.HPDI <- apply(mu,2,HPDI, prob=0.95)
 
 
-windows()
+windows() #use X11 for mac
 par(mar = c(5, 5, 2, 2))
 plot(0, 0, type="n", xlab=expression(paste("Signed response speed (",italic(SRS),")")), ylab=expression(paste("Logit ", italic(P))),xlim=c(-1, 1), ylim=c(-1, 1),axes=T,bty="n", pch = 16)
 lines(SRS_seq, mu.mean)
@@ -346,7 +346,7 @@ rm(mu.mean, SRS_seq, mu, mu.HPDI, pred.data)
 ###########################################
 #counterfactual plots logit P and SRS on keeperPer, kicker
 ##########################################
-windows(height=20,width=20)
+windows(height=20,width=20) #use X11 for mac
 par( mar=0.5+c(5,4,2,1) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
      cex.lab=1.5 )
 par(mfrow=c(2,2))
@@ -445,24 +445,24 @@ mtext(text="(% left minus right difference in goalmouth area)",side=1,line=3.5)
 mtext("Goalkeeper aligned central to the veridical goalmouth", outer = TRUE, font=2, line=-29, cex=1.5)
 
 ###########################################
-#counterfactual plots logit P and SRS on (keeperPer-kicker)/2 and (Keeper+kicker)/2
+#counterfactual plots logit P and SRS on (keeper-kicker) and (Keeper+kicker)
 ##########################################
-windows(height=20,width=20)
+windows(height=20,width=20) #use X11 for mac
 par( mar=0.5+c(5,4,2,1) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
      cex.lab=1.5 )
 par(mfrow=c(2,2))
 
-# Panel A conterfactual logit P on (keeperPer-kicker)/2, (Keeper+kicker)/2 position held constant at 0
-KK_seq <- seq(from=-4, to=4, by=0.5)
-p.link <- function(KKPer_DiffAve) post.m5$b0_mu + post.m5$b1_mu*KKPer_DiffAve
+# Panel A conterfactual logit P on (keeper-kicker), (Keeper+kicker) position held constant at 0
+KK_seq <- seq(from=-6, to=6, by=0.5)
+p.link <- function(KKPerDiff) post.m5$b0_mu + post.m5$b1_mu*KKPerDiff
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
 p.HPDI <- apply(p, 2, HPDI)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
-plot(0,0,type="n",xlab="(Goalkeeper position - Kicker position) / 2",ylab="Probability of left goal side selection", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-4,4),bty="n")
-axis(1, at=-4:4, labels=c("-4","-3","-2","-1","0","+1","+2","+3","+4"))
+plot(0,0,type="n",xlab="Goalkeeper position - Kicker position",ylab="Probability of left goal side selection", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-6,6),bty="n")
+axis(1, at=-6:6, labels=c("-6", "-5", "-4","-3","-2","-1","0","+1","+2","+3","+4","+5","+6"))
 axis(2, at=seq(0, 1 , 0.1))
 #mtext("Goalkeeper position + Kicker position = 0", font=2, cex=1.5)
 lines(KK_seq,p.mean)
@@ -470,23 +470,23 @@ polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("blac
 abline(h=0.5, lty=2)
 segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
 
-table=table(data$KKPer_DiffAve,data$Left)
+table=table(data$KKPerDiff,data$Left)
 PLeft=table[,2]/rowSums(table)
-points(c(-2.4, -0.8, 0.8, 2.4), PLeft)
+points(c(-4.8, -1.6, 1.6, 4.8), PLeft)
 
 #mtext(text="% left goalmouth area defined by the two players relative difference from central",side=1,line=3.5)
 
 
-# Panel B conterfactual SRS on (keeperPer-kicker)/2, (Keeper+kicker)/2 position held constant at 0
-KK_seq <- seq(from=-4, to=4, by=0.5)
-p.link <- function(KKPer_DiffAve) post.m6$b0_mu + post.m6$b1_mu*KKPer_DiffAve
+# Panel B conterfactual SRS on (keeperPer-kicker), (Keeper+kicker) position held constant at 0
+KK_seq <- seq(from=-6, to=6, by=0.5)
+p.link <- function(KKPerDiff) post.m6$b0_mu + post.m6$b1_mu*KKPerDiff
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
 p.HPDI <- apply(p, 2, HPDI)
 
 
-plot(0,0,type="n",xlab="(Goalkeeper position - Kicker position) / 2",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-4,4),bty="n")
-axis(1, at=-4:4, labels=c("-4","-3","-2","-1","0","+1","+2","+3","+4"))
+plot(0,0,type="n",xlab="Goalkeeper position - Kicker position",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-6,6),bty="n")
+axis(1, at=-6:6, labels=c("-6", "-5", "-4","-3","-2","-1","0","+1","+2","+3","+4","+5","+6"))
 axis(2, at=seq(-1, 1 , 0.2))
 #mtext("Goalkeeper position + Kicker position = 0", font=2, cex=1.5)
 lines(KK_seq,p.mean)
@@ -494,8 +494,8 @@ polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("blac
 abline(h=0.0, lty=2)
 segments(x0=0,y0=-1.2,x1=0,y1=1, lty=2)
 
-SRS=with(data, tapply(SRS, KKPer_DiffAve, mean))
-points(c(-2.4, -0.8, 0.8, 2.4),SRS)
+SRS=with(data, tapply(SRS, KKPerDiff, mean))
+points(c(-4.8, -1.6, 1.6, 4.8),SRS)
 
 
 #mtext(text="% left goalmouth area defined by the two players relative difference from central",side=1,line=3.5)
@@ -503,53 +503,54 @@ points(c(-2.4, -0.8, 0.8, 2.4),SRS)
 mtext("Goalkeeper position + Kicker position = 0", outer = TRUE, line=-1, font=2, cex=1.5)
 
 
-# Panel c conterfactual logit P on (Keeper+kicker)/2, (keeperPer-kicker)/2 position held constant at 0
-KK_seq <- seq(from=-4, to=4, by=0.5)
-p.link <- function(KKPer_SumAve) post.m5$b0_mu + post.m5$b2_mu*KKPer_SumAve
+# Panel c conterfactual logit P on (Keeper+kicker), (keeper-kicker) position held constant at 0
+KK_seq <- seq(from=-6, to=6, by=0.5)
+p.link <- function(KKPerSum) post.m5$b0_mu + post.m5$b2_mu*KKPerSum
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
 p.HPDI <- apply(p, 2, HPDI)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
-plot(0,0,type="n",xlab="(Goalkeeper position + Kicker position) / 2",ylab="Probability of left goal side selection", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-4,4),bty="n")
-axis(1, at=-4:4, labels=c("-4","-3","-2","-1","0","+1","+2","+3","+4"))
+plot(0,0,type="n",xlab="Goalkeeper position + Kicker position",ylab="Probability of left goal side selection", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-6,6),bty="n")
+axis(1, at=-6:6, labels=c("-6", "-5", "-4","-3","-2","-1","0","+1","+2","+3","+4","+5","+6"))
 axis(2, at=seq(0, 1 , 0.1))
 lines(KK_seq,p.mean)
 polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("black", 0.15), border = NA)
 abline(h=0.5, lty=2)
 segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
 
-table=table(data$KKPer_SumAve,data$Left)
+table=table(data$KKPerSum,data$Left)
 PLeft=table[,2]/rowSums(table)
-points(c(-2.4, -0.8, 0.8, 2.4), PLeft)
+points(c(-4.8, -1.6, 1.6, 4.8), PLeft)
 
 
 #mtext(text="% left goalmouth area defined by the two players average position from central",side=1,line=3.5)
 
 
-# Panel D conterfactual SRS on (Keeper+kicker)/2, (keeperPer-kicker)/2 position held constant at 0
-KK_seq <- seq(from=-4, to=4, by=0.5)
-p.link <- function(KKPer_SumAve) post.m6$b0_mu + post.m6$b2_mu*KKPer_SumAve
+# Panel D conterfactual SRS on (Keeper+kicker), (keeper-kicker) position held constant at 0
+KK_seq <- seq(from=-6, to=6, by=0.5)
+p.link <- function(KKPerSum) post.m6$b0_mu + post.m6$b2_mu*KKPerSum
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
 p.HPDI <- apply(p, 2, HPDI)
 
 
-plot(0,0,type="n",xlab="(Goalkeeper position + Kicker position) / 2",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-4,4),bty="n")
-axis(1, at=-4:4, labels=c("-4","-3","-2","-1","0","+1","+2","+3","+4"))
+plot(0,0,type="n",xlab="Goalkeeper position + Kicker position",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-6,6),bty="n")
+axis(1, at=-6:6, labels=c("-6", "-5", "-4","-3","-2","-1","0","+1","+2","+3","+4","+5","+6"))
 axis(2, at=seq(-1, 1 , 0.2))
 lines(KK_seq,p.mean)
 polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("black", 0.15), border = NA)
 abline(h=0.0, lty=2)
 segments(x0=0,y0=-1.2,x1=0,y1=1, lty=2)
 
-SRS=with(data, tapply(SRS, KKPer_SumAve, mean))
-points(c(-2.4, -0.8, 0.8, 2.4),SRS)
+SRS=with(data, tapply(SRS, KKPerSum, mean))
+points(c(-4.8, -1.6, 1.6, 4.8),SRS)
 
 #mtext(text="% left goalmouth area defined by the two players average position from central",side=1,line=3.5)
 
 mtext("Goalkeeper position - Kicker position = 0", outer = TRUE, font=2, line=-29, cex=1.5)
+
 
 #######################################################################
 # That's it

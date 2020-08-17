@@ -152,36 +152,7 @@ tidy_up=function(dataset){
   print(levels(as.factor(dataset$diff)))
   
   
-  #calculate Z(kickerPos) and Z(keeperPos)
-  keeperpos=as.numeric(dataset$keeperpos)
-  kickerpos=as.numeric(dataset$kickerpos)
-  
-  # keeperpos=log(keeperpos)
-  # kickerpos=log(kickerpos)
-  
 
-  Zkeeperpos=(keeperpos-mean(keeperpos))/sd(keeperpos)
-  Zkickerpos=(kickerpos-mean(kickerpos))/sd(kickerpos)
-  Zave=(dataset$ave-mean(dataset$ave))/sd(dataset$ave)
-  Zdiff=(dataset$diff-mean(dataset$diff))/sd(dataset$diff)
-  
-  dataset$Zkeeperpos=round(Zkeeperpos,2)
-  dataset$Zkickerpos=round(Zkickerpos,2)
-  dataset$Zave=round(Zave,2)
-  dataset$Zdiff=round(Zdiff,2)
-  
-  print(levels(as.factor(dataset$Zkeeperpos)))
-  print(levels(as.factor(dataset$Zkickerpos)))
-  print(levels(as.factor(dataset$Zave)))
-  print(levels(as.factor(dataset$Zdiff)))
-  
-  
-  # should all have mean=0 and Sd=1
-  describe(dataset$Zkeeperpos)
-  describe(dataset$Zkeeperpos)
-  describe(dataset$Zave)
-  describe(dataset$Zdiff)
-  
   
   #difference in area 
   
@@ -202,13 +173,6 @@ tidy_up=function(dataset){
   print(levels(as.factor(dataset$KeeperPer)))
   print(levels(as.factor(dataset$KickerPer)))
   
-  # Z difference in area
-  # dataset$ZkeeperPer=round((dataset$KeeperPer-mean(dataset$KeeperPer))/sd(dataset$KeeperPer),2)
-  # dataset$ZkickerPer=round((dataset$KickerPer-mean(dataset$KickerPer))/sd(dataset$KickerPer),2)
-  # 
-  # print(levels(as.factor(dataset$ZkeeperPer)))
-  # print(levels(as.factor(dataset$ZkickerPer)))
-  
   
   # calculate sum and difference in % difference in area
   
@@ -221,26 +185,12 @@ tidy_up=function(dataset){
   dataset$KKPerDiff[dataset$KKPerDiff==4.9] <- 4.8
   dataset$KKPerDiff[dataset$KKPerDiff==-4.9] <- -4.8
   
-  dataset$KKPer_SumAve=dataset$KKPerSum/2
-  dataset$KKPer_DiffAve=dataset$KKPerDiff/2
   
   print(levels(as.factor(dataset$KKPerSum)))
   print(levels(as.factor(dataset$KKPerDiff)))
   print(levels(as.factor(dataset$KKPer_SumAve)))
   print(levels(as.factor(dataset$KKPer_DiffAve)))
   
-  
-  # dataset$ZKKPerSum=round((dataset$KKPerSum-mean(dataset$KKPerSum))/sd(dataset$KKPerSum),2)
-  # dataset$ZKKPerDiff=round((dataset$KKPerDiff-mean(dataset$KKPerDiff))/sd(dataset$KKPerDiff),2)
-  # 
-  # print(levels(as.factor(dataset$ZKKPerSum)))
-  # print(levels(as.factor(dataset$ZKKPerDiff)))
-  # 
-  
-  # print(describe(dataset$Zkeeperpos))
-  # print(describe(dataset$Zkickerpos))
-  # print(describe(dataset$Zave))
-  # print(describe(dataset$Zdiff))
   
   
   # Remove RT outliers

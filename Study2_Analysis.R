@@ -70,9 +70,6 @@ Data$KickerPer=round(Data$KickerPer*100,1)
 # sum and difference of the keepers and kickers positions
 Data$KKPerSum=Data$KeeperPer+Data$KickerPer
 Data$KKPerDiff=Data$KeeperPer-Data$KickerPer
-Data$KKPer_SumAve=Data$KKPerSum/2
-Data$KKPer_DiffAve=Data$KKPerDiff/2
-
 
 
 
@@ -116,7 +113,7 @@ sum(  Data$GK_dive != Data$KgoalSS)
 print("percent kicked to goal side with greatest area")
 sum(Data$GK_dis != Data$KgoalSS)
 
-windows(height=20,width=30)
+windows(height=20,width=30) #use X11 for mac
 par( mar=0.5+c(5,4,0,1) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0))
 par(mfrow=c(1,2))
 
@@ -156,11 +153,11 @@ precis(m1,depth=2,prob=0.95)
 post.m1 <- extract.samples(m1)
 
 
-#m2 logit P on (Keeper-kicker)/2 and (Keeper+kicker)/2
+#m2 logit P on (Keeper-kicker) and (Keeper+kicker)
 m2 <- ulam(
   alist(
     KgoalSS ~ bernoulli( p ),
-    logit(p) <- b0 + b1*KKPer_DiffAve + b2*KKPer_SumAve,
+    logit(p) <- b0 + b1*KKPerDiff + b2*KKPerSum,
     b0 ~ normal(0,1),
     b1 ~ normal(0,1),
     b2 ~ normal(0,1)
@@ -175,7 +172,7 @@ post.m2 <- extract.samples(m2)
 ###########################################
 #counterfactual plots logit P on keeperPer, kicker
 ##########################################
-windows(height=20,width=30)
+windows(height=20,width=30) #use X11 for mac
 par( mar=0.5+c(5,4,2,1) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
      cex.lab=1.5 )
 par(mfrow=c(1,2))
@@ -220,27 +217,26 @@ segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
 
 
 ###########################################
-#counterfactual plots logit P and SRS on (keeperPer-kicker)/2 and (Keeper+kicker)/2
+#counterfactual plots logit P and SRS on (keeper-kicker) and (Keeper+kicker)
 ##########################################
 
-windows(height=20,width=30)
+windows(height=20,width=30) #use X11 for mac
 par( mar=0.5+c(5,4,2,1) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
      cex.lab=1.5 )
 par(mfrow=c(1,2))
 
-
-# Panel A counterfactual logit P on (keeperPer-kicker)/2, (Keeper+kicker)/2 position held constant at 0
-KK_seq <- seq(from=-8, to=8, by=0.5)
-p.link <- function(KKPer_DiffAve) post.m2$b0 + post.m2$b1*KKPer_DiffAve
+# Panel A counterfactual logit P on (keeper-kicker), (Keeper+kicker) position held constant at 0
+KK_seq <- seq(from=-10, to=10, by=0.5)
+p.link <- function(KKPerDiff) post.m2$b0 + post.m2$b1*KKPerDiff
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
 p.HPDI <- apply(p, 2, HPDI)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
-plot(0,0,type="n",main="Goalkeeper position + Kicker position = 0", xlab="(Goalkeeper position - Kicker position) / 2",
-     ylab="Probability of left goal side shot", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-8,8),bty="n")
-axis(1, at=c(-8,-6,-4,-2,0,2,4,6,8), labels=c("-8","-6","-4","-2","0","+2","+4","+6","+8"))
+plot(0,0,type="n",main="Goalkeeper position + Kicker position = 0", xlab="Goalkeeper position - Kicker position",
+     ylab="Probability of left goal side shot", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-10,10),bty="n")
+axis(1, at=c(-10,-8,-6,-4,-2,0,2,4,6,8,10), labels=c("-10","-8","-6","-4","-2","0","+2","+4","+6","+8","+10"))
 axis(2, at=seq(0, 1 , 0.1))
 lines(KK_seq,p.mean)
 polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("black", 0.15), border = NA)
@@ -249,9 +245,9 @@ segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
 
 
 
-# Panel B conterfactual logit P on (Keeper+kicker)/2, (keeperPer-kicker)/2 position held constant at 0
-KK_seq <- seq(from=-8, to=8, by=0.5)
-p.link <- function(KKPer_SumAve) post.m2$b0 + post.m2$b2*KKPer_SumAve
+# Panel B conterfactual logit P on (Keeper+kicker), (keeperPer-kicker) position held constant at 0
+KK_seq <- seq(from=-10, to=10, by=0.5)
+p.link <- function(KKPerSum) post.m2$b0 + post.m2$b2*KKPerSum
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
 p.HPDI <- apply(p, 2, HPDI)
@@ -259,15 +255,13 @@ p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
 plot(0,0,type="n",main="Goalkeeper position - Kicker position = 0",
-     xlab="(Goalkeeper position + Kicker position) / 2",ylab="Probability of left goal side shot", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-8,8),bty="n")
-axis(1, at=c(-8,-6,-4,-2,0,2,4,6,8), labels=c("-8","-6","-4","-2","0","+2","+4","+6","+8"))
+     xlab="Goalkeeper position + Kicker position",ylab="Probability of left goal side shot", yaxt="n", ylim =c(0,1), xaxt="n", xlim=c(-10,10),bty="n")
+axis(1, at=c(-10,-8,-6,-4,-2,0,2,4,6,8,10), labels=c("-10","-8","-6","-4","-2","0","+2","+4","+6","+8","+10"))
 axis(2, at=seq(0, 1 , 0.1))
 lines(KK_seq,p.mean)
 polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("black", 0.15), border = NA)
 abline(h=0.5, lty=2)
 segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
-
-
 
 
 
