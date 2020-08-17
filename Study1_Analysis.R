@@ -71,12 +71,12 @@ for (file in file_list){
 rm(list=setdiff(ls(), "dataset"))
 
 
+# clean up the data and create transformed variables
+# you must have Study1_DataPrep.R in your working directory for this to work
+
 # Select the working directory
 setwd("~/Soccer")
-
-# clean up the data and create transformed variables
-# you must have Utilities.R in your working directory for this to work
-source("Utilities.R")
+source("Study1_DataPrep.R")
 data=tidy_up(dataset)
 
 rm(dataset)
