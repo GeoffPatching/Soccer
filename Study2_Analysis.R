@@ -170,14 +170,14 @@ post.m2 <- extract.samples(m2)
 
 
 ###########################################
-#counterfactual plots logit P on keeperPer, kicker
+#counterfactual plots logit P on keeper, kicker
 ##########################################
 windows(height=20,width=30) #use X11 for mac
 par( mar=0.5+c(5,4,2,1) , oma=0.1+c(0,0,2,0) , mgp=c(2.25,0.7,0) , 
      cex.lab=1.5 )
 par(mfrow=c(1,2))
 
-# Panel A conterfactual of logit P on keeperPer, kicker position held constant at 0
+# Panel A conterfactual of logit P on keeper, kicker position held constant at 0
 KeeperPer_seq <- seq(from=-12, to=12, by=0.5)
 p.link <- function(KeeperPer) post.m1$b0 + post.m1$b1*KeeperPer
 p <- sapply(KeeperPer_seq, p.link)
@@ -196,7 +196,7 @@ abline(h=0.5, lty=2)
 segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
 
 
-# Panel c conterfactual logit P on kickerPer, keeper position held constant at 0
+# Panel c conterfactual logit P on kicker, keeper position held constant at 0
 Kicker_seq <- seq(from=-12, to=12, by=0.5)
 p.link <- function(KickerPer) post.m1$b0 - post.m1$b2*KickerPer
 p <- sapply(Kicker_seq, p.link)
