@@ -263,5 +263,46 @@ polygon(c(KK_seq,rev(KK_seq)),c(p.HPDI[1,],rev(p.HPDI[2,])), col=col.alpha("blac
 abline(h=0.5, lty=2)
 segments(x0=0,y0=-0.2,x1=0,y1=1, lty=2)
 
+#############################################################
+# Model comparison
+############################################################
 
+require(rethinking)
 
+# leave 1 core available for other processes
+nCores = parallel::detectCores() 
+chains <- nCores <- nCores-1
+
+Data$KgoalSS = as.numeric(Data$KgoalSS)
+
+#m1 logit P on Keeper and kicker position
+m1a <- ulam(
+  alist(
+    KgoalSS ~ bernoulli( p ),
+    logit(p) <- b0,
+    b0 ~ normal(0,1)
+  ),
+  data=Data, warmup=2000 , iter=5000 , chains=chains , cores=nCores, sample=TRUE, log_lik=TRUE)
+
+m1b <- ulam(
+  alist(
+    KgoalSS ~ bernoulli( p ),
+    logit(p) <- b0 + b1*KeeperPer,
+    b0 ~ normal(0,1),
+    b1 ~ normal(0,1)
+  ),
+  data=Data, warmup=2000 , iter=5000 , chains=chains , cores=nCores, sample=TRUE, log_lik=TRUE)
+
+compare(m1a,m1b,m1)
+
+#m2 logit P on (Keeper-kicker) and (Keeper+kicker)
+m2b <- ulam(
+  alist(
+    KgoalSS ~ bernoulli( p ),
+    logit(p) <- b0 + b1*KKPerDiff,
+    b0 ~ normal(0,1),
+    b1 ~ normal(0,1)
+  ),
+  data=Data, warmup=2000 , iter=5000 , chains=chains , cores=nCores, sample=TRUE, log_lik=TRUE)
+
+compare(m1a,m2b,m2)
