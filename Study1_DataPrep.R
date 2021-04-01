@@ -83,7 +83,7 @@ tidy_up=function(dataset){
   require(psych)
   
   #name the columns
-  colnames(dataset) <- c("trials","Subj","age", "finger","image", "SC_keeperpos", "SC_goalpos","SC_ave", "SC_diff", "Left", "Right", "RT")
+  colnames(dataset) <- c("trials","Subj","age","finger","sex","image", "SC_keeperpos", "SC_goalpos","SC_ave", "SC_diff", "Left", "Right", "RT")
   
   #correct for MATLAB rounding error
   dataset$SC_ave[dataset$SC_ave==154.44] <- 154.43
@@ -191,27 +191,29 @@ tidy_up=function(dataset){
   print(levels(as.factor(dataset$KKPer_SumAve)))
   print(levels(as.factor(dataset$KKPer_DiffAve)))
   
-  
+  #recode finger and sex (male =0 , female=1)
+  dataset$finger=dataset$finger-1
+  dataset$sex=dataset$sex-1
   
   # Remove RT outliers
   # There are some very long Rts >4000ms and some very short RTs<1ms. 
   # The very long and short RTs are a problem
-  data = dataset[which(dataset$RT<=2000),]
-  Feinting_numout=nrow(dataset)-nrow(data)
-  Perout_Feinting=(Feinting_numout/nrow(dataset))*100
-  print(Feinting_numout)
-  print(Perout_Feinting)
-  data = data[which(data$RT>=100),]
-  tot_numout=nrow(dataset)-nrow(data)
-  Perout_ant=((tot_numout-Feinting_numout)/nrow(dataset))*100
-  print(tot_numout)
-  print(Perout_ant)
-  # data = dataset
+  # data = dataset[which(dataset$RT<=2000),]
+  # Feinting_numout=nrow(dataset)-nrow(data)
+  # Perout_Feinting=(Feinting_numout/nrow(dataset))*100
+  # print(Feinting_numout)
+  # print(Perout_Feinting)
+  # data = data[which(data$RT>=100),]
+  # tot_numout=nrow(dataset)-nrow(data)
+  # Perout_ant=((tot_numout-Feinting_numout)/nrow(dataset))*100
+  # print(tot_numout)
+  # print(Perout_ant)
+   data = dataset
   
   
   #describeBy(data$RT,data$image)
   
-  #calculate SRS with RT converted to seconds - right=-1 and left =1
+  #calculate SRS with RT converted to seconds - right=1 and left =-1
   data$sign=data$Left + (data$Right*-1)
   data$RTsec=data$RT/1000
   data$SRS=data$sign/data$RTsec
