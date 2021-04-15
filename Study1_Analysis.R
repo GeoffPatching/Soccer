@@ -136,7 +136,7 @@ KeeperPer_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KeeperPer) post.m1$b0_mu + post.m1$b1_mu*KeeperPer
 p <- sapply(KeeperPer_seq, p.link)
 p.mean=apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
@@ -161,7 +161,7 @@ Kicker_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KickerPer) post.m1$b0_mu - post.m1$b2_mu*KickerPer
 p <- sapply(Kicker_seq, p.link)
 p.mean <- apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
@@ -219,7 +219,7 @@ KK_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KKPerDiff) post.m1a$b0_mu + post.m1a$b1_mu*KKPerDiff
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
@@ -241,7 +241,7 @@ KK_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KKPerSum) post.m1a$b0_mu + post.m1a$b2_mu*KKPerSum
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 p.mean=logistic(p.mean)
 p.HPDI=logistic(p.HPDI)
 
@@ -272,12 +272,11 @@ chains <- nCores <- nCores-1
 #m2 logit P on finger (response assignment)
 m2 <- ulam(
   alist(
-    Left ~ bernoulli( p ),
-    logit(p) <- b0+b1*finger,
-    b0 ~ normal(0,1),
-    b1 ~ normal(0,1)
+    Left ~ binomial(1, p ),     
+    logit(p) <- a[finger],
+    a[finger] ~ normal(0, 1)          
   ),
-  data=data, warmup=2000 , iter=5000 , chains=chains , cores=nCores, sample=TRUE, log_lik=TRUE)
+  data=data, warmup=500 , iter=1000 , chains=1 , cores=nCores)
 
 precis(m2,depth=3,prob=0.95)
 post <- extract.samples(m2)
@@ -285,15 +284,14 @@ post$diff_fm <- post$b0 - post$b1
 precis( post , depth=3,hist=FALSE,prob=0.95 )
 rm(m2,post)
 
-#m3 logit P on sex (male = 0, female = 1; Study1_DataPrep.R)
+#m3 logit P on sex (male = 1, female = 2)
 m3 <- ulam(
   alist(
-    Left ~ bernoulli( p ),
-    logit(p) <- b0+b1*sex,
-    b0 ~ normal(0,1),
-    b1 ~ normal(0,1)
+    Left ~ binomial(1, p ),     
+    logit(p) <- a[sex],
+    a[sex] ~ normal(0, 1)          
   ),
-  data=data,warmup=2000 , iter=5000 , chains=chains , cores=nCores, sample=TRUE, log_lik=TRUE)
+  data=data, warmup=500 , iter=1000 , chains=1 , cores=nCores)
 
 precis(m3,depth=3,prob=0.95)
 post <- extract.samples(m3)
@@ -366,7 +364,8 @@ compare(m6,m1a) #intercept + keeperdiff vs intercept + keeperdiff +keepersum
 m7 <- ulam(
   alist(
     Left ~ bernoulli( p ),
-    logit(p) <- b0[Subj] + b1[Subj]*KeeperPer - b2[Subj]*KickerPer + b3*finger,
+    logit(p) <- a[finger]+b0[Subj] + b1[Subj]*KeeperPer - b2[Subj]*KickerPer,
+    a[finger] ~ normal(0, 1),
     b0[Subj] ~ normal(b0_mu, b0_sigma),
     b1[Subj] ~ normal(b1_mu, b1_sigma),
     b2[Subj] ~ normal(b2_mu, b2_sigma),
@@ -392,7 +391,8 @@ compare(m1,m7) #intercept + keeper + kicker vs. intercept + keeper + kicker + fi
 m8 <- ulam(
   alist(
     Left ~ bernoulli( p ),
-    logit(p) <- b0[Subj] + b1[Subj]*KeeperPer - b2[Subj]*KickerPer + b3*sex,
+    logit(p) <- a[sex]+b0[Subj] + b1[Subj]*KeeperPer - b2[Subj]*KickerPer,
+    a[sex] ~ normal(0, 1),
     b0[Subj] ~ normal(b0_mu, b0_sigma),
     b1[Subj] ~ normal(b1_mu, b1_sigma),
     b2[Subj] ~ normal(b2_mu, b2_sigma),
@@ -554,7 +554,7 @@ KeeperPer_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KeeperPer) post.m12$b0_mu + post.m12$b1_mu*KeeperPer
 p <- sapply(KeeperPer_seq, p.link)
 p.mean=apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 
 plot(0,0,type="n",xlab="Goalkeeper position",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-6,6),bty="n")
 axis(1, at=-6:6, labels=c("-6","-5","-4","-3","-2","-1","0","+1","+2","+3","+4","+5","+6"))
@@ -575,7 +575,7 @@ Kicker_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KickerPer) post.m12$b0_mu - post.m12$b2_mu*KickerPer
 p <- sapply(Kicker_seq, p.link)
 p.mean <- apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 
 plot(0,0,type="n",xlab="Kicker position",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-6,6),bty="n")
 axis(1, at=-6:6, labels=c("-6","-5","-4","-3","-2","-1","0","+1","+2","+3","+4","+5","+6"))
@@ -631,7 +631,7 @@ KK_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KKPerDiff) post.m13$b0_mu + post.m13$b1_mu*KKPerDiff
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 
 
 plot(0,0,type="n",xlab="Goalkeeper position - Kicker position",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-6,6),bty="n")
@@ -652,7 +652,7 @@ KK_seq <- seq(from=-6, to=6, by=0.5)
 p.link <- function(KKPerSum) post.m13$b0_mu + post.m13$b2_mu*KKPerSum
 p <- sapply(KK_seq, p.link)
 p.mean=apply(p, 2, mean)
-p.HPDI <- apply(p, 2, HPDI)
+p.HPDI <- apply(p, 2, HPDI, prob=0.95)
 
 
 plot(0,0,type="n",xlab="Goalkeeper position + Kicker position",ylab=expression(paste("Signed response speed (",italic(SRS),")")), yaxt="n", ylim =c(-1,1), xaxt="n", xlim=c(-6,6),bty="n")
